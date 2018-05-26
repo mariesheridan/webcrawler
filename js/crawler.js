@@ -28,7 +28,7 @@ var crawlThisLevel = function(level, totalURLList, levelURLList, baseURL, depth,
 
     getLinks(levelURLList, baseURL, index, numOfURL, includeAssets, function(newUrlList) {
         if (level < depth) {
-            totalURLList = newUrlList.reduce(addNonExistingURL, totalURLList);
+            totalURLList = newUrlList.reduce(pushIfNotExisting, totalURLList);
             crawlThisLevel(level + 1, totalURLList, newUrlList, baseURL, depth, includeAssets, callback);
         } else {
             callback(newUrlList);
@@ -92,15 +92,11 @@ var getLinksFromURL = function(urlList, baseURL, index, includeAssets, callback)
 var sanitizeURLs = function(currentState, url) {
     if (isExternalLink(url)) {
         var list = currentState.urlList;
-        if (!list.includes(url)) {
-            currentState.urlList.push(url);
-        }
+        currentState.urlList = pushIfNotExisting(list, url);
     } else if(isInternalLinkFromBaseURL(url)) {
         var completeURL = currentState.baseURL + url;
         var list = currentState.urlList;
-        if (!list.includes(completeURL)) {
-            currentState.urlList.push(completeURL);
-        }
+        currentState.urlList = pushIfNotExisting(list, completeURL);
     }
     return currentState;
 }
@@ -112,12 +108,8 @@ var sanitizeURLs = function(currentState, url) {
  * "https://cdn.kikki-k.com/media/favicon/default/favicon.ico"
  */
 var isExternalLink = function(link) {
-    var result = false;
-    if (link) {
-        var pattern = /\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,4}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g;
-        result = link.match(pattern);
-    }
-    return result;
+    var pattern = /\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,4}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g;
+    return hasPattern(link, pattern);
 }
 
 /**
@@ -126,17 +118,31 @@ var isExternalLink = function(link) {
  * "/endpoint1/endpoint2"
  */
 var isInternalLinkFromBaseURL = function(link) {
+    var pattern = /^\/[^\/].*/g;
+    return hasPattern(link, pattern);
+}
+
+/**
+ * Checks if link is a file URL
+ * Example:
+ * "http://domain.com/file.html"
+ */
+var isFileURL = function(url) {
+    var pattern = /.*\.[A-Za-z]{2,4}$/gi;
+    return hasPattern(url, pattern);
+}
+
+var hasPattern = function(string, pattern) {
     var result = false;
-    if (link) {
-        var pattern = /^\/[^\/].*/g;
-        result = link.match(pattern);
+    if (string) {
+        result = string.match(pattern);
     }
     return result;
 }
 
-var addNonExistingURL = function(totalList, url) {
-    if (!totalList.includes(url)) {
-        totalList.push(url);
+var pushIfNotExisting = function(list, item) {
+    if (!list.includes(item)) {
+        list.push(item);
     }
-    return totalList;
+    return list;
 }
