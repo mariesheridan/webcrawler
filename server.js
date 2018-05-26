@@ -26,8 +26,9 @@ app.get('/crawl', function(req, res){
     });
 })
 
-app.listen('8081')
+var port = process.env.PORT || 8888;
+app.listen(port);
 
-console.log('Magic happens on port 8081');
+console.log('App is listening to port: ' + port);
 
 exports = module.exports = app;
