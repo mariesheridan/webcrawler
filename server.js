@@ -5,7 +5,7 @@ var app = express();
 app.get('/crawl', function(req, res){
 
     console.log('crawl hit!');
-    url = 'https://www.kikki-k.com/blog/';
+    url = 'https://www.google.com/';
     depth = 2;
     includeAssets = false;
 
