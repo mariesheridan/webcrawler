@@ -9,14 +9,7 @@ module.exports = {
     crawl: function (url, depth, includeAssets, callback) {
         var level = 1;
         crawlThisLevel(level, [url], [url], url, depth, includeAssets, function(urlList) {
-            fs.writeFile(
-                'output.json',
-                JSON.stringify(urlList, null, 4),
-                function(err) {
-                    console.log('File successfully written! - Check your project directory for the output.json file');
-                    callback();
-                }
-            );
+            writeToFile('output.json', urlList, callback)
         });
     }
 };
@@ -90,10 +83,12 @@ var getLinksFromURL = function(currentURL, baseURL, includeAssets, callback) {
                 list.push(link);
             });
 
-            $('img').each(function(){
-                var link = $(this).attr('src');
-                list.push(link);
-            });
+            if (includeAssets) {
+                $('img').each(function(){
+                    var link = $(this).attr('src');
+                    list.push(link);
+                });
+            }
 
             var initialState = {
                 urlList: resultList,
@@ -223,4 +218,15 @@ var pushIfNotExisting = function(list, item) {
         list.push(item);
     }
     return list;
+}
+
+var writeToFile = function(filename, jsonData, callback) {
+    fs.writeFile(
+        filename,
+        JSON.stringify(jsonData, null, 4),
+        function(err) {
+            console.log('File is saved! Filename: ' + filename);
+            callback();
+        }
+    );
 }
