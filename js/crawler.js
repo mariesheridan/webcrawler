@@ -14,6 +14,9 @@ module.exports = {
     }
 };
 
+/**
+ * Recursive function to crawl all the links for a particular level.
+ */
 var crawlThisLevel = function(level, totalURLList, levelURLList, baseURL, depth, includeAssets, callback) {
 
     console.log("Level " + level + " of " + depth);
@@ -32,6 +35,10 @@ var crawlThisLevel = function(level, totalURLList, levelURLList, baseURL, depth,
     });
 }
 
+/**
+ * Downloads the websites from the list of urls asynchronously.
+ * When everything is done, it combines all links into one list.
+ */
 var getLinksForLevel = function(urlList, baseURL, includeAssets, callback) {
     let promises = [];
     const numOfURL = urlList.length;
@@ -56,6 +63,9 @@ var getLinksForLevel = function(urlList, baseURL, includeAssets, callback) {
     });
 }
 
+/**
+ * Performs http request to get the html file then parses it to get all the links.
+ */
 var getLinksFromURL = function(currentURL, baseURL, includeAssets, callback) {
     request(currentURL, function(error, response, html) {
         let resultList = [];
@@ -101,6 +111,10 @@ var getLinksFromURL = function(currentURL, baseURL, includeAssets, callback) {
     });
 }
 
+/**
+ * Gets the file size of the files in the list asynchronously.
+ * Sets the error field when an error is encountered.
+ */
 var getFileSize = function(fileURLList, callback) {
     let promises = [];
     const numOfURL = fileURLList.length;
@@ -127,6 +141,9 @@ var getFileSize = function(fileURLList, callback) {
     });
 }
 
+/**
+ * Adds missing parts in the urls.
+ */
 var sanitizeURLs = function(currentState, url) {
     let list = currentState.urlList;
     if (isExternalLink(url)) {
