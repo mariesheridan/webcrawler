@@ -2,7 +2,7 @@
 
 ## Usage
 
-   localhost:8888/crawl?url=<url>&depth=<depth>&assets=<include asset flag>
+   localhost:8888/crawl?url=`<url>`&depth=`<depth>`&assets=`<include asset flag>`
 
 Example:
 
