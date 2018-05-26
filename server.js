@@ -1,30 +1,23 @@
 var express = require('express');
-var fs = require('fs');
-var request = require('request');
-var cheerio = require('cheerio');
+var crawler = require('./js/crawler');
 var app = express();
 
 app.get('/crawl', function(req, res){
 
-    console.log("crawl hit!");
+    console.log('crawl hit!');
     url = 'https://www.kikki-k.com/blog/';
+    depth = 1;
+    includeAssets = false;
 
-    request(url, function(error, response, html){
-        console.log('request callback');
-        if(!error) {
-            console.log("No error!");
-            var $ = cheerio.load(html);
-
-            var href = $('a').first().attr('href');
-
-            console.log("href = " + href);
-        } else {
-            console.log("Error: " + error);
+    crawler.crawl(
+        url,
+        depth,
+        includeAssets,
+        function(){
+            res.send('Finished crawling!')
         }
-
-        res.send('Check your console!')
-    });
-})
+    );
+});
 
 var port = process.env.PORT || 8888;
 app.listen(port);
