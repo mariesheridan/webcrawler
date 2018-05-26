@@ -4,9 +4,9 @@ var app = express();
 
 app.get('/crawl', function(req, res){
 
-    url = req.query.url;
-    depth = req.query.depth;
-    includeAssets = req.query.assets;
+    url = req.query.url || "http://www.google.com";
+    depth = req.query.depth || 2;
+    includeAssets = req.query.assets || false;
 
     console.log('starting crawl...');
     console.log('url           : ' + url);
