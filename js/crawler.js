@@ -11,11 +11,9 @@ var json = {
 
 module.exports = {
     crawl: function (url, depth, includeAssets, callback) {
-
         var level = 1;
 
-        visitURLs([url], level, depth, includeAssets, function(urlList) {
-
+        crawlThisLevel(level, [url], url, depth, includeAssets, function(urlList) {
             fs.writeFile(
                 'output.json',
                 JSON.stringify(urlList, null, 4),
@@ -28,25 +26,36 @@ module.exports = {
     }
 };
 
-var visitURLs = function(urlList, level, depth, includeAssets, callback) {
+var crawlThisLevel = function(level, urlList, baseURL, depth, includeAssets, callback) {
 
     console.log("Level " + level + " of " + depth);
     var numOfURL = urlList.length;
     var index = 0;
 
-    getLinks(urlList, index, includeAssets, function(newUrlList) {
+    getLinks(urlList, baseURL, index, numOfURL, includeAssets, function(newUrlList) {
         if (level < depth) {
-            visitURLs(newUrlList, level + 1, depth, includeAssets, callback)
+            crawlThisLevel(level + 1, newUrlList, baseURL, depth, includeAssets, callback);
         } else {
             callback(newUrlList);
         }
     });
 }
 
-var getLinks = function(urlList, index, includeAssets, callback) {
+var getLinks = function(urlList, baseURL, index, numOfURL, includeAssets, callback) {
+
+    getLinksFromURL(urlList, baseURL, index, includeAssets, function(newURLList) {
+        if (index < (numOfURL - 1)) {
+            getLinks(newURLList, baseURL, index + 1, numOfURL, includeAssets, callback);
+        } else {
+            callback(newURLList);
+        }
+    });
+}
+
+var getLinksFromURL = function(urlList, baseURL, index, includeAssets, callback) {
 
     request(urlList[index], function(error, response, html) {
-        console.log('request callback');
+        console.log('====> request callback : ' + urlList[index]);
 
         var resultList = urlList;
 
@@ -72,10 +81,10 @@ var getLinks = function(urlList, index, includeAssets, callback) {
             var initialState = {
                 urlList: urlList,
                 currentURL: urlList[index],
-                baseURL: urlList[0]
+                baseURL: baseURL
             };
             var newState = list.reduce(sanitizeURLs, initialState);
-            resultList = newState.urlList;
+            resultList = urlList.concat(newState.urlList);
         } else {
             console.log('Error: ' + error);
         }
@@ -87,19 +96,21 @@ var getLinks = function(urlList, index, includeAssets, callback) {
 var sanitizeURLs = function(currentState, url) {
     if (isExternalLink(url)) {
         var list = currentState.urlList;
-        if (!list.includes(url)) {
-            currentState.urlList.push(url);
-        }
+        currentState.urlList.push(url);
     } else if(isInternalLinkFromBaseURL(url)) {
         var completeURL = currentState.baseURL + url;
         var list = currentState.urlList;
-        if (!list.includes(completeURL)) {
-            currentState.urlList.push(completeURL);
-        }
+        currentState.urlList.push(completeURL);
     }
     return currentState;
 }
 
+/**
+ * Checks if the link is external.
+ * Example:
+ * "//cdn.optimizely.com/js/3316040336.js"
+ * "https://cdn.kikki-k.com/media/favicon/default/favicon.ico"
+ */
 var isExternalLink = function(link) {
     var result = false;
     if (link) {
@@ -109,6 +120,11 @@ var isExternalLink = function(link) {
     return result;
 }
 
+/**
+ * Checks if link is relative to the base URL
+ * Example:
+ * "/endpoint1/endpoint2"
+ */
 var isInternalLinkFromBaseURL = function(link) {
     var result = false;
     if (link) {
