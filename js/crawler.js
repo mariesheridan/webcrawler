@@ -3,17 +3,11 @@ var cheerio = require('cheerio');
 var fs = require('fs');
 
 var visitedLinks = [];
-var json = {
-    hrefs: [],
-    links :[],
-    scripts: []
-};
 
 module.exports = {
     crawl: function (url, depth, includeAssets, callback) {
         var level = 1;
-
-        crawlThisLevel(level, [url], url, depth, includeAssets, function(urlList) {
+        crawlThisLevel(level, [url], [url], url, depth, includeAssets, function(urlList) {
             fs.writeFile(
                 'output.json',
                 JSON.stringify(urlList, null, 4),
@@ -26,15 +20,16 @@ module.exports = {
     }
 };
 
-var crawlThisLevel = function(level, urlList, baseURL, depth, includeAssets, callback) {
+var crawlThisLevel = function(level, totalURLList, levelURLList, baseURL, depth, includeAssets, callback) {
 
     console.log("Level " + level + " of " + depth);
-    var numOfURL = urlList.length;
+    var numOfURL = levelURLList.length;
     var index = 0;
 
-    getLinks(urlList, baseURL, index, numOfURL, includeAssets, function(newUrlList) {
+    getLinks(levelURLList, baseURL, index, numOfURL, includeAssets, function(newUrlList) {
         if (level < depth) {
-            crawlThisLevel(level + 1, newUrlList, baseURL, depth, includeAssets, callback);
+            totalURLList = newUrlList.reduce(addNonExistingURL, totalURLList);
+            crawlThisLevel(level + 1, totalURLList, newUrlList, baseURL, depth, includeAssets, callback);
         } else {
             callback(newUrlList);
         }
@@ -84,6 +79,7 @@ var getLinksFromURL = function(urlList, baseURL, index, includeAssets, callback)
                 baseURL: baseURL
             };
             var newState = list.reduce(sanitizeURLs, initialState);
+            console.log(urlList.length);
             resultList = urlList.concat(newState.urlList);
         } else {
             console.log('Error: ' + error);
@@ -96,11 +92,15 @@ var getLinksFromURL = function(urlList, baseURL, index, includeAssets, callback)
 var sanitizeURLs = function(currentState, url) {
     if (isExternalLink(url)) {
         var list = currentState.urlList;
-        currentState.urlList.push(url);
+        if (!list.includes(url)) {
+            currentState.urlList.push(url);
+        }
     } else if(isInternalLinkFromBaseURL(url)) {
         var completeURL = currentState.baseURL + url;
         var list = currentState.urlList;
-        currentState.urlList.push(completeURL);
+        if (!list.includes(completeURL)) {
+            currentState.urlList.push(completeURL);
+        }
     }
     return currentState;
 }
@@ -132,4 +132,11 @@ var isInternalLinkFromBaseURL = function(link) {
         result = link.match(pattern);
     }
     return result;
+}
+
+var addNonExistingURL = function(totalList, url) {
+    if (!totalList.includes(url)) {
+        totalList.push(url);
+    }
+    return totalList;
 }
