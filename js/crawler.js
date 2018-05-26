@@ -23,36 +23,57 @@ module.exports = {
 var crawlThisLevel = function(level, totalURLList, levelURLList, baseURL, depth, includeAssets, callback) {
 
     console.log("Level " + level + " of " + depth);
-    var numOfURL = levelURLList.length;
     var index = 0;
 
-    getLinks(totalURLList, baseURL, index, numOfURL, includeAssets, function(levelOutput) {
+    getLinksForLevel(levelURLList, baseURL, includeAssets, function(levelOutput) {
         totalURLList = levelOutput.reduce(pushIfNotExisting, totalURLList);
         if (level < depth) {
             crawlThisLevel(level + 1, totalURLList, levelOutput, baseURL, depth, includeAssets, callback);
         } else {
+            console.log("totalURLList:");
+            console.log(totalURLList);
             callback(totalURLList);
         }
     });
 }
 
-var getLinks = function(urlList, baseURL, index, numOfURL, includeAssets, callback) {
+var getLinksForLevel = function(urlList, baseURL, includeAssets, callback) {
+    var promises = [];
+    var numOfURL = urlList.length;
+    for (var i = 0; i < numOfURL; i++) {
+        var promise = new Promise(function(resolve, reject){
+            getLinksFromURL(urlList[i], baseURL, includeAssets, function(links) {
+                resolve(links);
+            });
+        });
+        promises.push(promise);
+    }
 
-    getLinksFromURL(urlList, baseURL, index, includeAssets, function(newURLList) {
-        if (index < (numOfURL - 1)) {
-            getLinks(newURLList, baseURL, index + 1, numOfURL, includeAssets, callback);
-        } else {
-            callback(newURLList);
+    Promise.all(promises).then(function(listArray) {
+        var arraySize = listArray.length;
+        var combinedList = [];
+        for (var i = 0; i < arraySize; i++) {
+            var list = listArray[i];
+            combinedList = list.reduce(pushIfNotExisting, combinedList);
         }
+        console.log("then is called");
+        callback(combinedList);
     });
+    // getLinksFromURL(urlList, baseURL, index, includeAssets, function(newURLList) {
+    //     if (index < (numOfURL - 1)) {
+    //         getLinks(newURLList, baseURL, index + 1, numOfURL, includeAssets, callback);
+    //     } else {
+    //         callback(newURLList);
+    //     }
+    // });
 }
 
-var getLinksFromURL = function(urlList, baseURL, index, includeAssets, callback) {
+var getLinksFromURL = function(currentURL, baseURL, includeAssets, callback) {
 
-    request(urlList[index], function(error, response, html) {
-        console.log('====> request callback : ' + urlList[index]);
+    request(currentURL, function(error, response, html) {
+        console.log('====> request callback : ' + currentURL);
 
-        var resultList = urlList;
+        var resultList = [];
 
         if(!error) {
             var $ = cheerio.load(html);
@@ -74,15 +95,17 @@ var getLinksFromURL = function(urlList, baseURL, index, includeAssets, callback)
             });
 
             var initialState = {
-                urlList: urlList,
-                currentURL: urlList[index],
+                urlList: resultList,
+                currentURL: currentURL,
                 baseURL: baseURL
             };
             var newState = list.reduce(sanitizeURLs, initialState);
-            console.log(urlList.length);
+            console.log(newState.urlList.length);
+            resultList = newState.urlList;
         } else {
             console.log('Error: ' + error);
         }
+        console.log(resultList);
 
         callback(resultList);
     });
