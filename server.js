@@ -4,10 +4,14 @@ var app = express();
 
 app.get('/crawl', function(req, res){
 
-    console.log('crawl hit!');
-    url = 'https://www.google.com/';
-    depth = 2;
-    includeAssets = false;
+    url = req.query.url;
+    depth = req.query.depth;
+    includeAssets = req.query.assets;
+
+    console.log('starting crawl...');
+    console.log('url           : ' + url);
+    console.log('depth         : ' + depth);
+    console.log('include assets: ' + includeAssets);
 
     crawler.crawl(
         url,
