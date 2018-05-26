@@ -1,6 +1,7 @@
 var request = require('request');
 var cheerio = require('cheerio');
 var fs = require('fs');
+var remoteFileSize = require('remote-file-size');
 
 var visitedLinks = [];
 
@@ -30,7 +31,10 @@ var crawlThisLevel = function(level, totalURLList, levelURLList, baseURL, depth,
         if (level < depth) {
             crawlThisLevel(level + 1, totalURLList, levelOutput, baseURL, depth, includeAssets, callback);
         } else {
-            callback(totalURLList);
+            var fileURLList = totalURLList.filter(isFileURL);
+            getFileSize(fileURLList, function(filesWithSizes){
+                callback(filesWithSizes);
+            });
         }
     });
 }
@@ -86,6 +90,11 @@ var getLinksFromURL = function(currentURL, baseURL, includeAssets, callback) {
                 list.push(link);
             });
 
+            $('img').each(function(){
+                var link = $(this).attr('src');
+                list.push(link);
+            });
+
             var initialState = {
                 urlList: resultList,
                 currentURL: currentURL,
@@ -95,10 +104,39 @@ var getLinksFromURL = function(currentURL, baseURL, includeAssets, callback) {
             console.log(newState.urlList.length);
             resultList = newState.urlList;
         } else {
-            console.log('Error: ' + error);
+            console.log('Request Error: ' + error);
         }
 
         callback(resultList);
+    });
+}
+
+var getFileSize = function(fileURLList, callback) {
+    console.log(fileURLList);
+    var promises = [];
+    var numOfURL = fileURLList.length;
+    for (var i = 0; i < numOfURL; i++) {
+        var file = fileURLList[i];
+        var promise = new Promise(function(resolve, reject){
+            console.log("~~~~> Get file size: " + file);
+            remoteFileSize(file, function(error, size) {
+                var item = {
+                    link: file,
+                    size: size
+                };
+                if (error) {
+                    console.log("ssss> link: " + file);
+                    console.log("ssss> size: " + size);
+                    item['error'] = error;
+                }
+                resolve(item);
+            });
+        });
+        promises.push(promise);
+    }
+
+    Promise.all(promises).then(function(filesWithSizes) {
+        callback(filesWithSizes);
     });
 }
 
@@ -142,7 +180,7 @@ var isInternalLinkFromBaseURL = function(link) {
  * "http://domain.com/file.html"
  */
 var isFileURL = function(url) {
-    var pattern = /.*\.[A-Za-z]{2,4}$/gi;
+    var pattern = /\/.+\/[\w\d-_.]+\.[A-Za-z]{2,4}$/gi;
     return hasPattern(url, pattern);
 }
 
