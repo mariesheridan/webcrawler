@@ -46,12 +46,11 @@ var visitURLs = function(urlList, level, depth, includeAssets, callback) {
 var getLinks = function(urlList, index, includeAssets, callback) {
 
     request(urlList[index], function(error, response, html) {
-        var list = urlList;
-
         console.log('request callback');
 
         if(!error) {
             var $ = cheerio.load(html);
+            var list = [];
 
             $('a').each(function(){
                 var href = $(this).attr('href');
@@ -60,7 +59,6 @@ var getLinks = function(urlList, index, includeAssets, callback) {
 
             $('script').each(function(){
                 var script = $(this).attr('src');
-                // var script = $(this).html();
                 list.push(script);
             });
 
@@ -68,10 +66,49 @@ var getLinks = function(urlList, index, includeAssets, callback) {
                 var link = $(this).attr('href');
                 list.push(link);
             });
+
+            var initialState = {
+                urlList: [],
+                currentURL: urlList[index],
+                baseURL: urlList[0]
+            };
+            var newState = list.reduce(sanitizeURLs, initialState);
+            urlList = urlList.concat(newState.urlList);
         } else {
             console.log('Error: ' + error);
         }
 
-        callback(list);
+        callback(urlList);
     });
+}
+
+var sanitizeURLs = function(currentState, url) {
+    if (isExternalLink(url)) {
+        var list = currentState.urlList;
+        currentState.urlList.push(url);
+    } else if(isInternalLinkFromBaseURL(url)) {
+        var completeURL = currentState.baseURL + url;
+        var list = currentState.urlList;
+        currentState.urlList.push(completeURL);
+    }
+    return currentState;
+}
+
+var isExternalLink = function(link) {
+    var result = false;
+    if (link) {
+        var pattern = /\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,4}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g;
+        result = link.match(pattern);
+    }
+    return result;
+}
+
+var isInternalLinkFromBaseURL = function(link) {
+    var result = false;
+    if (link) {
+        var pattern = /^\/[^\/].*/g;
+        result = link.match(pattern);
+    }
+    console.log(link + " ---> " + result);
+    return result;
 }
