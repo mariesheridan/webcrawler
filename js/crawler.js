@@ -17,6 +17,7 @@ module.exports = {
 var crawlThisLevel = function(level, totalURLList, levelURLList, baseURL, depth, includeAssets, callback) {
 
     console.log("Level " + level + " of " + depth);
+    console.log("Number of links: " + levelURLList.length);
     var index = 0;
 
     getLinksForLevel(levelURLList, baseURL, includeAssets, function(levelOutput) {
@@ -37,7 +38,6 @@ var getLinksForLevel = function(urlList, baseURL, includeAssets, callback) {
     var numOfURL = urlList.length;
     for (var i = 0; i < numOfURL; i++) {
         var promise = new Promise(function(resolve, reject){
-            console.log("---> Get link: " + urlList[i]);
             getLinksFromURL(urlList[i], baseURL, includeAssets, function(links) {
                 resolve(links);
             });
@@ -58,10 +58,7 @@ var getLinksForLevel = function(urlList, baseURL, includeAssets, callback) {
 }
 
 var getLinksFromURL = function(currentURL, baseURL, includeAssets, callback) {
-
     request(currentURL, function(error, response, html) {
-        console.log('====> request callback : ' + currentURL);
-
         var resultList = [];
 
         if(!error) {
@@ -96,7 +93,6 @@ var getLinksFromURL = function(currentURL, baseURL, includeAssets, callback) {
                 baseURL: baseURL
             };
             var newState = list.reduce(sanitizeURLs, initialState);
-            console.log(newState.urlList.length);
             resultList = newState.urlList;
         } else {
             console.log('Request Error: ' + error);
@@ -107,13 +103,11 @@ var getLinksFromURL = function(currentURL, baseURL, includeAssets, callback) {
 }
 
 var getFileSize = function(fileURLList, callback) {
-    console.log(fileURLList);
     var promises = [];
     var numOfURL = fileURLList.length;
     for (var i = 0; i < numOfURL; i++) {
         var file = fileURLList[i];
         var promise = new Promise(function(resolve, reject){
-            console.log("~~~~> Get file size: " + file);
             var currentFile = file;
             remoteFileSize(currentFile, function(error, size) {
                 var item = {
@@ -121,8 +115,6 @@ var getFileSize = function(fileURLList, callback) {
                     size: size
                 };
                 if (error) {
-                    console.log("ssss> link: " + currentFile);
-                    console.log("ssss> size: " + size);
                     item['error'] = error;
                 }
                 resolve(item);
