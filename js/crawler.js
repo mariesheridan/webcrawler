@@ -6,18 +6,29 @@ module.exports = {
     crawl: function (url, depth, includeAssets, callback) {
         request(url, function(error, response, html){
             console.log('request callback');
+            var json = {
+                links:[]
+            };
+
             if(!error) {
-                console.log('No error!');
                 var $ = cheerio.load(html);
 
-                var href = $('a').first().attr('href');
-
-                console.log('href = ' + href);
+                $('a').each(function(){
+                    var href = $(this).attr('href');
+                    json.links.push(href);
+                });
             } else {
                 console.log('Error: ' + error);
             }
 
-            callback();
+            fs.writeFile(
+                'output.json',
+                JSON.stringify(json, null, 4),
+                function(err){
+                    console.log('File successfully written! - Check your project directory for the output.json file');
+                    callback();
+                }
+            );
         });
     }
 };
