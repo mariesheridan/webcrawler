@@ -1,0 +1,12 @@
+{
+  "name"         : "webcrawler",
+  "version"      : "0.0.1",
+  "description"  : "Downloads resources from a url.",
+  "main"         : "server.js",
+  "author"       : "Marie Sheridan Tuazon",
+  "dependencies" : {
+    "express"    : "4.16.3",
+    "request"    : "2.87.0",
+    "cheerio"    : "1.0.0-rc.2"
+  }
+}
