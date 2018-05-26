@@ -48,6 +48,8 @@ var getLinks = function(urlList, index, includeAssets, callback) {
     request(urlList[index], function(error, response, html) {
         console.log('request callback');
 
+        var resultList = urlList;
+
         if(!error) {
             var $ = cheerio.load(html);
             var list = [];
@@ -68,28 +70,32 @@ var getLinks = function(urlList, index, includeAssets, callback) {
             });
 
             var initialState = {
-                urlList: [],
+                urlList: urlList,
                 currentURL: urlList[index],
                 baseURL: urlList[0]
             };
             var newState = list.reduce(sanitizeURLs, initialState);
-            urlList = urlList.concat(newState.urlList);
+            resultList = newState.urlList;
         } else {
             console.log('Error: ' + error);
         }
 
-        callback(urlList);
+        callback(resultList);
     });
 }
 
 var sanitizeURLs = function(currentState, url) {
     if (isExternalLink(url)) {
         var list = currentState.urlList;
-        currentState.urlList.push(url);
+        if (!list.includes(url)) {
+            currentState.urlList.push(url);
+        }
     } else if(isInternalLinkFromBaseURL(url)) {
         var completeURL = currentState.baseURL + url;
         var list = currentState.urlList;
-        currentState.urlList.push(completeURL);
+        if (!list.includes(completeURL)) {
+            currentState.urlList.push(completeURL);
+        }
     }
     return currentState;
 }
@@ -109,6 +115,5 @@ var isInternalLinkFromBaseURL = function(link) {
         var pattern = /^\/[^\/].*/g;
         result = link.match(pattern);
     }
-    console.log(link + " ---> " + result);
     return result;
 }

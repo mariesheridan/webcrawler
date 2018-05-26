@@ -6,7 +6,7 @@ app.get('/crawl', function(req, res){
 
     console.log('crawl hit!');
     url = 'https://www.kikki-k.com/blog/';
-    depth = 1;
+    depth = 2;
     includeAssets = false;
 
     crawler.crawl(
