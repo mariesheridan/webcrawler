@@ -30,8 +30,6 @@ var crawlThisLevel = function(level, totalURLList, levelURLList, baseURL, depth,
         if (level < depth) {
             crawlThisLevel(level + 1, totalURLList, levelOutput, baseURL, depth, includeAssets, callback);
         } else {
-            console.log("totalURLList:");
-            console.log(totalURLList);
             callback(totalURLList);
         }
     });
@@ -42,6 +40,7 @@ var getLinksForLevel = function(urlList, baseURL, includeAssets, callback) {
     var numOfURL = urlList.length;
     for (var i = 0; i < numOfURL; i++) {
         var promise = new Promise(function(resolve, reject){
+            console.log("---> Get link: " + urlList[i]);
             getLinksFromURL(urlList[i], baseURL, includeAssets, function(links) {
                 resolve(links);
             });
@@ -50,22 +49,15 @@ var getLinksForLevel = function(urlList, baseURL, includeAssets, callback) {
     }
 
     Promise.all(promises).then(function(listArray) {
+        console.log("---- Merging lists ----");
         var arraySize = listArray.length;
         var combinedList = [];
         for (var i = 0; i < arraySize; i++) {
             var list = listArray[i];
             combinedList = list.reduce(pushIfNotExisting, combinedList);
         }
-        console.log("then is called");
         callback(combinedList);
     });
-    // getLinksFromURL(urlList, baseURL, index, includeAssets, function(newURLList) {
-    //     if (index < (numOfURL - 1)) {
-    //         getLinks(newURLList, baseURL, index + 1, numOfURL, includeAssets, callback);
-    //     } else {
-    //         callback(newURLList);
-    //     }
-    // });
 }
 
 var getLinksFromURL = function(currentURL, baseURL, includeAssets, callback) {
@@ -105,7 +97,6 @@ var getLinksFromURL = function(currentURL, baseURL, includeAssets, callback) {
         } else {
             console.log('Error: ' + error);
         }
-        console.log(resultList);
 
         callback(resultList);
     });
