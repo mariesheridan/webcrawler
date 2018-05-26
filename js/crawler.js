@@ -119,13 +119,14 @@ var getFileSize = function(fileURLList, callback) {
         var file = fileURLList[i];
         var promise = new Promise(function(resolve, reject){
             console.log("~~~~> Get file size: " + file);
-            remoteFileSize(file, function(error, size) {
+            var currentFile = file;
+            remoteFileSize(currentFile, function(error, size) {
                 var item = {
-                    link: file,
+                    link: currentFile,
                     size: size
                 };
                 if (error) {
-                    console.log("ssss> link: " + file);
+                    console.log("ssss> link: " + currentFile);
                     console.log("ssss> size: " + size);
                     item['error'] = error;
                 }
