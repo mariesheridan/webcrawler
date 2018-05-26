@@ -26,12 +26,12 @@ var crawlThisLevel = function(level, totalURLList, levelURLList, baseURL, depth,
     var numOfURL = levelURLList.length;
     var index = 0;
 
-    getLinks(levelURLList, baseURL, index, numOfURL, includeAssets, function(newUrlList) {
+    getLinks(totalURLList, baseURL, index, numOfURL, includeAssets, function(levelOutput) {
+        totalURLList = levelOutput.reduce(pushIfNotExisting, totalURLList);
         if (level < depth) {
-            totalURLList = newUrlList.reduce(pushIfNotExisting, totalURLList);
-            crawlThisLevel(level + 1, totalURLList, newUrlList, baseURL, depth, includeAssets, callback);
+            crawlThisLevel(level + 1, totalURLList, levelOutput, baseURL, depth, includeAssets, callback);
         } else {
-            callback(newUrlList);
+            callback(totalURLList);
         }
     });
 }
@@ -80,7 +80,6 @@ var getLinksFromURL = function(urlList, baseURL, index, includeAssets, callback)
             };
             var newState = list.reduce(sanitizeURLs, initialState);
             console.log(urlList.length);
-            resultList = urlList.concat(newState.urlList);
         } else {
             console.log('Error: ' + error);
         }
@@ -138,6 +137,13 @@ var hasPattern = function(string, pattern) {
         result = string.match(pattern);
     }
     return result;
+}
+
+var addFileURLs = function(fileURLList, url) {
+    if (isFileURL(url)) {
+        fileURLList = pushIfNotExisting(fileURLList, url);
+    }
+    return fileURLList;
 }
 
 var pushIfNotExisting = function(list, item) {
