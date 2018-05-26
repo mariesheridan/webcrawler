@@ -105,7 +105,8 @@ var getLinksFromURL = function(currentURL, baseURL, includeAssets, callback) {
 var sanitizeURLs = function(currentState, url) {
     if (isExternalLink(url)) {
         var list = currentState.urlList;
-        currentState.urlList = pushIfNotExisting(list, url);
+        var cleanURL = sanitizeExternalURL(url);
+        currentState.urlList = pushIfNotExisting(list, cleanURL);
     } else if(isInternalLinkFromBaseURL(url)) {
         var completeURL = currentState.baseURL + url;
         var list = currentState.urlList;
@@ -143,6 +144,24 @@ var isInternalLinkFromBaseURL = function(link) {
 var isFileURL = function(url) {
     var pattern = /.*\.[A-Za-z]{2,4}$/gi;
     return hasPattern(url, pattern);
+}
+
+/**
+ * Checks if url does not have http: or https: at the beginning
+ */
+var isMissingHttp = function(url) {
+    var pattern = /^\/\/.*/g;
+    return hasPattern(url, pattern);
+}
+
+/**
+ * Some external URLs don't have http. request returns an error.
+ */
+var sanitizeExternalURL = function(url) {
+    if (isMissingHttp(url)) {
+        url = 'http:' + url;
+    }
+    return url;
 }
 
 var hasPattern = function(string, pattern) {
