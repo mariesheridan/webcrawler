@@ -17,8 +17,8 @@ app.get('/crawl', function(req, res){
         url,
         depth,
         includeAssets,
-        function(){
-            res.send('Finished crawling!')
+        function(filename){
+            res.download(filename);
         }
     );
 });

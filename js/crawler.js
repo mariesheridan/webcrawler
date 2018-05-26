@@ -216,7 +216,7 @@ var writeToFile = function(filename, jsonData, callback) {
         JSON.stringify(jsonData, null, 4),
         function(err) {
             console.log('File is saved! Filename: ' + filename);
-            callback();
+            callback(filename);
         }
     );
 }
