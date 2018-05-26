@@ -7,7 +7,7 @@ var visitedLinks = [];
 
 module.exports = {
     crawl: function (url, depth, includeAssets, callback) {
-        var level = 1;
+        const level = 1;
         crawlThisLevel(level, [url], [url], url, depth, includeAssets, function(urlList) {
             writeToFile('output.json', urlList, callback)
         });
@@ -18,14 +18,13 @@ var crawlThisLevel = function(level, totalURLList, levelURLList, baseURL, depth,
 
     console.log("Level " + level + " of " + depth);
     console.log("Number of links: " + levelURLList.length);
-    var index = 0;
 
     getLinksForLevel(levelURLList, baseURL, includeAssets, function(levelOutput) {
         totalURLList = levelOutput.reduce(pushIfNotExisting, totalURLList);
         if (level < depth) {
             crawlThisLevel(level + 1, totalURLList, levelOutput, baseURL, depth, includeAssets, callback);
         } else {
-            var fileURLList = totalURLList.filter(isFileURL);
+            let fileURLList = totalURLList.filter(isFileURL);
             getFileSize(fileURLList, function(filesWithSizes){
                 callback(filesWithSizes);
             });
@@ -34,10 +33,10 @@ var crawlThisLevel = function(level, totalURLList, levelURLList, baseURL, depth,
 }
 
 var getLinksForLevel = function(urlList, baseURL, includeAssets, callback) {
-    var promises = [];
-    var numOfURL = urlList.length;
-    for (var i = 0; i < numOfURL; i++) {
-        var promise = new Promise(function(resolve, reject){
+    let promises = [];
+    const numOfURL = urlList.length;
+    for (let i = 0; i < numOfURL; i++) {
+        let promise = new Promise(function(resolve, reject){
             getLinksFromURL(urlList[i], baseURL, includeAssets, function(links) {
                 resolve(links);
             });
@@ -47,8 +46,8 @@ var getLinksForLevel = function(urlList, baseURL, includeAssets, callback) {
 
     Promise.all(promises).then(function(listArray) {
         console.log("---- Merging lists ----");
-        var arraySize = listArray.length;
-        var combinedList = [];
+        const arraySize = listArray.length;
+        let combinedList = [];
         for (var i = 0; i < arraySize; i++) {
             var list = listArray[i];
             combinedList = list.reduce(pushIfNotExisting, combinedList);
@@ -59,40 +58,40 @@ var getLinksForLevel = function(urlList, baseURL, includeAssets, callback) {
 
 var getLinksFromURL = function(currentURL, baseURL, includeAssets, callback) {
     request(currentURL, function(error, response, html) {
-        var resultList = [];
+        let resultList = [];
 
         if(!error) {
-            var $ = cheerio.load(html);
-            var list = [];
+            const $ = cheerio.load(html);
+            let list = [];
 
             $('a').each(function(){
-                var href = $(this).attr('href');
+                const href = $(this).attr('href');
                 list.push(href);
             });
 
             $('script').each(function(){
-                var script = $(this).attr('src');
+                const script = $(this).attr('src');
                 list.push(script);
             });
 
             $('link').each(function(){
-                var link = $(this).attr('href');
+                const link = $(this).attr('href');
                 list.push(link);
             });
 
             if (includeAssets) {
                 $('img').each(function(){
-                    var link = $(this).attr('src');
+                    const link = $(this).attr('src');
                     list.push(link);
                 });
             }
 
-            var initialState = {
+            let initialState = {
                 urlList: resultList,
                 currentURL: currentURL,
                 baseURL: baseURL
             };
-            var newState = list.reduce(sanitizeURLs, initialState);
+            const newState = list.reduce(sanitizeURLs, initialState);
             resultList = newState.urlList;
         } else {
             console.log('Request Error: ' + error);
@@ -103,14 +102,14 @@ var getLinksFromURL = function(currentURL, baseURL, includeAssets, callback) {
 }
 
 var getFileSize = function(fileURLList, callback) {
-    var promises = [];
-    var numOfURL = fileURLList.length;
-    for (var i = 0; i < numOfURL; i++) {
-        var file = fileURLList[i];
+    let promises = [];
+    const numOfURL = fileURLList.length;
+    for (let i = 0; i < numOfURL; i++) {
+        let file = fileURLList[i];
         var promise = new Promise(function(resolve, reject){
-            var currentFile = file;
+            let currentFile = file;
             remoteFileSize(currentFile, function(error, size) {
-                var item = {
+                let item = {
                     link: currentFile,
                     size: size
                 };
@@ -129,13 +128,12 @@ var getFileSize = function(fileURLList, callback) {
 }
 
 var sanitizeURLs = function(currentState, url) {
+    let list = currentState.urlList;
     if (isExternalLink(url)) {
-        var list = currentState.urlList;
-        var cleanURL = sanitizeExternalURL(url);
+        const cleanURL = sanitizeExternalURL(url);
         currentState.urlList = pushIfNotExisting(list, cleanURL);
     } else if(isInternalLinkFromBaseURL(url)) {
-        var completeURL = currentState.baseURL + url;
-        var list = currentState.urlList;
+        const completeURL = currentState.baseURL + url;
         currentState.urlList = pushIfNotExisting(list, completeURL);
     }
     return currentState;
@@ -148,7 +146,7 @@ var sanitizeURLs = function(currentState, url) {
  * "https://cdn.kikki-k.com/media/favicon/default/favicon.ico"
  */
 var isExternalLink = function(link) {
-    var pattern = /\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,4}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g;
+    const pattern = /\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,4}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/g;
     return hasPattern(link, pattern);
 }
 
@@ -158,7 +156,7 @@ var isExternalLink = function(link) {
  * "/endpoint1/endpoint2"
  */
 var isInternalLinkFromBaseURL = function(link) {
-    var pattern = /^\/[^\/].*/g;
+    const pattern = /^\/[^\/].*/g;
     return hasPattern(link, pattern);
 }
 
@@ -168,7 +166,7 @@ var isInternalLinkFromBaseURL = function(link) {
  * "http://domain.com/file.html"
  */
 var isFileURL = function(url) {
-    var pattern = /\/.+\/[\w\d-_.]+\.[A-Za-z]{2,4}$/gi;
+    const pattern = /\/.+\/[\w\d-_.]+\.[A-Za-z]{2,4}$/gi;
     return hasPattern(url, pattern);
 }
 
@@ -176,7 +174,7 @@ var isFileURL = function(url) {
  * Checks if url does not have http: or https: at the beginning
  */
 var isMissingHttp = function(url) {
-    var pattern = /^\/\/.*/g;
+    const pattern = /^\/\/.*/g;
     return hasPattern(url, pattern);
 }
 
@@ -191,7 +189,7 @@ var sanitizeExternalURL = function(url) {
 }
 
 var hasPattern = function(string, pattern) {
-    var result = false;
+    let result = false;
     if (string) {
         result = string.match(pattern);
     }
